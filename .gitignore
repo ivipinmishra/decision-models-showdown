@@ -1,0 +1,7 @@
+.venv/
+.env
+__pycache__/
+.pytest_cache/
+*.sqlite
+.DS_Store
+.claude/settings.local.json

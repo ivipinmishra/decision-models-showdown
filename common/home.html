@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decision Models Showdown</title>
+<link rel="stylesheet" href="/static/ui.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%231d4ed8%22/%3E%3Ctext x=%2216%22 y=%2223%22 font-size=%2220%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22sans-serif%22%3E%E2%87%84%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+<main>
+  <section class="hero">
+    <div class="eyebrow">A side-by-side experiment</div>
+    <h1>Two decision-model APIs.<br><span>Same questions. Side by side.</span></h1>
+    <p class="lede">OpenAI Decisions (<code>gpt-6-luna</code>) and TypeSafe Jev both answer typed questions
+      (yes/no, pick one, rate on a scale) with <b>probabilities instead of prose</b>. This demo sends identical
+      questions to both in parallel. Plain code then makes the final call, using thresholds you control.</p>
+  </section>
+
+  <section>
+    <h2 class="kicker">How every run works</h2>
+    <ol class="flow">
+      <li><b>Input</b><span>ticket text or alert JSON</span></li>
+      <li><b>Same typed questions</b><span>choice · yes/no · score</span></li>
+      <li><b>Both APIs, in parallel</b><span>OpenAI and TypeSafe</span></li>
+      <li><b>Normalized answers</b><span>probabilities + confidence</span></li>
+      <li class="accent"><b>Your code decides</b><span>thresholds, not model text</span></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2 class="kicker">Two projects. Pick one to start.</h2>
+    <div class="projects">
+      <a class="project" href="/tickets/">
+        <div class="project-top"><span class="num big">1</span><span class="tag">Unstructured text</span></div>
+        <h3>Support Ticket Router</h3>
+        <p>Route free-text support tickets for <i>TaskHarbor</i>, a fictional project-management SaaS.</p>
+        <dl>
+          <dt>Input</dt><dd>A customer's message</dd>
+          <dt>Asks</dt><dd><code>team</code> choice · <code>security_sensitive</code> yes/no · <code>customer_impact</code> 0–3</dd>
+          <dt>Code decides</dt><dd>Team queue, security queue, or human review</dd>
+          <dt>Samples</dt><dd>20 hand-labeled tickets, including ambiguous ones</dd>
+        </dl>
+        <span class="go">Open Ticket Router →</span>
+      </a>
+      <a class="project" href="/alerts/">
+        <div class="project-top"><span class="num big">2</span><span class="tag">Structured JSON</span></div>
+        <h3>Cloud Alert Triage</h3>
+        <p>Triage monitoring alerts given as program state, the kind of input TypeSafe says Jev is built for.</p>
+        <dl>
+          <dt>Input</dt><dd>An alert object (metric, baseline, deploy info)</dd>
+          <dt>Asks</dt><dd><code>severity</code> 0–3 · <code>recommended_action</code> choice · <code>likely_caused_by_deploy</code> yes/no</dd>
+          <dt>Code decides</dt><dd>Ignore, watchlist, page on-call, or roll back</dd>
+          <dt>Samples</dt><dd>15 labeled alerts: spikes, slow burns, post-deploy</dd>
+        </dl>
+        <span class="go">Open Alert Triage →</span>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="kicker">The two APIs at a glance</h2>
+    <div class="tablewrap"><table class="compare glance">
+      <thead><tr><th></th><th>OpenAI Decisions</th><th>TypeSafe Jev</th></tr></thead>
+      <tbody>
+        <tr><td>Endpoint</td><td><code>POST /v1/decisions</code></td><td><code>POST /v1/systemone</code></td></tr>
+        <tr><td>Model</td><td><code>gpt-6-luna</code></td><td><code>jev-latest</code></td></tr>
+        <tr><td>Yes/no type</td><td><code>predicate</code> → probability</td><td><code>noul</code> → probability</td></tr>
+        <tr><td>Choice / score</td><td>distribution + confidence</td><td>distribution + confidence</td></tr>
+        <tr><td>Input</td><td>text (JSON is sent as text)</td><td>text <b>or a JSON object</b></td></tr>
+        <tr><td>List price</td><td>$0.10 / 1M input tokens</td><td>$0.042 / 1M input tokens</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="caveats">
+    <h2 class="kicker warn">Read this before drawing conclusions</h2>
+    <ul>
+      <li><b>MOCK mode is random.</b> A provider without an API key returns hash-derived fake probabilities.
+        Its numbers say nothing about the model.</li>
+      <li><b>Validate vendor claims on your own data.</b> Latency depends on your region and network, and calibration depends on your domain.</li>
+      <li><b>A confident answer can still be wrong.</b> Confidence describes how concentrated the distribution is, not whether the answer is correct.</li>
+      <li>To measure on the labeled samples, run <code>python eval.py --app tickets</code> or <code>--app alerts</code>.</li>
+    </ul>
+  </section>
+</main>
+<script src="/static/ui.js"></script>
+<script>renderShell("home");</script>
+</body>
+</html>

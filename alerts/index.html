@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alert Triage Showdown</title>
+<link rel="stylesheet" href="/static/ui.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%231d4ed8%22/%3E%3Ctext x=%2216%22 y=%2223%22 font-size=%2220%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22sans-serif%22%3E%E2%87%84%3C/text%3E%3C/svg%3E">
+</head>
+<body><main>
+<section class="page-head">
+  <div class="eyebrow"><span class="num">2</span> Project 2 of 2 · Structured JSON</div>
+  <h1>Cloud Alert Triage</h1>
+  <p class="lede">Can a decision model triage a monitoring alert given as <b>structured program state</b>?
+    TypeSafe receives the alert as a JSON object. OpenAI receives the same object serialized as text.
+    Your code turns the answers into an action using thresholds.</p>
+  <div class="facts">
+    <div><span>Input</span>An alert object: metric, baseline, duration, deploy info</div>
+    <div><span>Questions</span><code>severity</code> · <code>recommended_action</code> · <code>likely_caused_by_deploy</code></div>
+    <div><span>Code decides</span>ignore · watchlist · page on-call · rollback</div>
+  </div>
+</section>
+
+<div id="problem"></div>
+
+<section class="step">
+  <div class="step-head"><span class="stepnum">1</span><div><h2>Choose an alert</h2>
+    <p>Pick one of 15 labeled samples or edit the JSON yourself.</p></div></div>
+  <div class="row"><select id="sample" aria-label="Sample alert"></select></div>
+  <div class="expected" id="expected"></div>
+  <textarea id="input" aria-label="Alert JSON" class="tall"></textarea>
+</section>
+
+<section class="step">
+  <div class="step-head"><span class="stepnum">2</span><div><h2>Set your routing rules</h2>
+    <p>Severity is a probability-weighted value, Σ level × P(level), on a 0–3 scale. A value of 1.1 is not a category:
+      it means mostly "watch", with some "degraded". Your thresholds cut that continuous value.</p></div></div>
+  <div class="rules">
+    <label class="rule warnrule"><span>Page on-call if severity ≥</span>
+      <input type="number" id="ps" value="1.6" step="0.1" min="0" max="3"></label>
+    <label class="rule"><span>Add to watchlist if severity ≥</span>
+      <input type="number" id="ws" value="0.7" step="0.1" min="0" max="3"></label>
+    <label class="rule warnrule"><span>Roll back if page-level, a recent deploy, and P(deploy caused it) ≥</span>
+      <input type="number" id="rp" value="0.7" step="0.05" min="0" max="1"></label>
+  </div>
+  <p class="hint">Policy in code: staging alerts are capped at <i>add_to_watchlist</i>, whatever the model recommends.</p>
+</section>
+
+<section class="step run-step">
+  <div class="step-head"><span class="stepnum">3</span><div><h2>Run both providers</h2>
+    <p>Both requests run in parallel. Results appear below.</p></div></div>
+  <button id="run">Run OpenAI + TypeSafe</button>
+</section>
+
+<section id="out" class="results"></section>
+
+<script src="/static/ui.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+renderShell("alerts");
+loadQuestions($("problem"));
+loadSamples($("sample"), s => {
+  $("input").value = JSON.stringify(s.alert, null, 2);
+  $("expected").innerHTML = `Human label: severity <b>${s.expected_severity}</b> · action <b>${s.expected_action}</b> · deploy-caused <b>${s.expected_deploy_cause}</b>`;
+});
+$("run").onclick = () => {
+  let alert;
+  try { alert = JSON.parse($("input").value); }
+  catch (e) { $("out").innerHTML = `<p class="error">Invalid JSON: ${esc(e.message)}</p>`; return; }
+  runDecision($("run"), $("out"), alert,
+    { page_severity: +$("ps").value, watch_severity: +$("ws").value, rollback_deploy_p: +$("rp").value },
+    { decisionText: d => d.action });
+};
+</script>
+</main></body>
+</html>

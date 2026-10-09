@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ticket Router Showdown</title>
+<link rel="stylesheet" href="/static/ui.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%231d4ed8%22/%3E%3Ctext x=%2216%22 y=%2223%22 font-size=%2220%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22sans-serif%22%3E%E2%87%84%3C/text%3E%3C/svg%3E">
+</head>
+<body><main>
+<section class="page-head">
+  <div class="eyebrow"><span class="num">1</span> Project 1 of 2 · Unstructured text</div>
+  <h1>Support Ticket Router</h1>
+  <p class="lede">Can a decision model route a messy, free-text support ticket? Each provider gets the ticket
+    and three questions in <b>one batched request</b>. The models only answer. Your code decides where the ticket goes.</p>
+  <div class="facts">
+    <div><span>Input</span>A customer's message for <i>TaskHarbor</i></div>
+    <div><span>Questions</span><code>team</code> · <code>security_sensitive</code> · <code>customer_impact</code></div>
+    <div><span>Code decides</span>team queue · security queue · human review</div>
+  </div>
+</section>
+
+<div id="problem"></div>
+
+<section class="step">
+  <div class="step-head"><span class="stepnum">1</span><div><h2>Choose a ticket</h2>
+    <p>Pick one of 20 labeled samples or write your own. The label is what a human expects.</p></div></div>
+  <div class="row"><select id="sample" aria-label="Sample ticket"></select></div>
+  <div class="expected" id="expected"></div>
+  <textarea id="input" aria-label="Ticket text"></textarea>
+</section>
+
+<section class="step">
+  <div class="step-head"><span class="stepnum">2</span><div><h2>Set your routing rules</h2>
+    <p>These run in your code, after the models answer. Change them and run again to see the routing change.</p></div></div>
+  <div class="rules">
+    <label class="rule"><span>Send to human review if team confidence is below</span>
+      <input type="number" id="ct" value="0.75" step="0.05" min="0" max="1"></label>
+    <label class="rule warnrule"><span>Send to the security queue if P(security_sensitive) is above</span>
+      <input type="number" id="st" value="0.5" step="0.05" min="0" max="1"></label>
+  </div>
+  <p class="hint"><code>team == other</code> always goes to human review. The security rule overrides every other rule.</p>
+</section>
+
+<section class="step run-step">
+  <div class="step-head"><span class="stepnum">3</span><div><h2>Run both providers</h2>
+    <p>Both requests run in parallel. Results appear below.</p></div></div>
+  <button id="run">Run OpenAI + TypeSafe</button>
+</section>
+
+<section id="out" class="results"></section>
+
+<p class="note">Confidence for choice and score answers describes how concentrated the distribution is. It is not accuracy.
+  A confident answer can still be wrong. Choose thresholds from labeled data with <code>python eval.py --app tickets</code>.</p>
+
+<script src="/static/ui.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+renderShell("tickets");
+loadQuestions($("problem"));
+loadSamples($("sample"), s => {
+  $("input").value = s.text;
+  $("expected").innerHTML = `Human label: team <b>${s.expected_team}</b> · security <b>${s.expected_security}</b> · impact <b>${s.expected_impact}</b>`;
+});
+$("run").onclick = () => runDecision($("run"), $("out"), $("input").value,
+  { choice_threshold: +$("ct").value, security_threshold: +$("st").value },
+  { decisionText: d => d.queue.replace("team:", "→ ") });
+</script>
+</main></body>
+</html>
